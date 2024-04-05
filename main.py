@@ -57,6 +57,66 @@ trucks = 2
 delivered = set()
 packages = [4, 4, 1, 3, 4, 2]
 
+class Route:
+    def __init__(self, packages: list[int]):
+        self.route = [0] + packages + [0]
+
+    def contains_external(self, package: int) -> bool:
+        """
+        Verifies whether the provided package id is both part of this route and external (adjacent to the hub)
+        """
+        return self.route[1] == package or self.route[-2] == package
+
+    def insert(self, package: int, adjacent_package: int):
+        """
+        Given a package id and adjacent package id that is external, inserts the package on the appropriate end of the route.
+        """
+        if self.route[-2] == adjacent_package:
+            self.route.insert(-1, package)
+        else:
+            self.route.insert(1, package)
+
+    def remove(self, package: int):
+        """
+        Removes the provided package from the route if it is external. Useful for backtracking.
+        """
+        if self.route[1] == package or self.route[-2] == package:
+            self.route.remove(package)
+
+    def merge(self, route: 'Route', i: int, j: int):
+        """
+        Merges route with another route given the two external nodes i and j.
+        """
+
+        if i > j:
+            i, j = j, i
+
+        if self.route[-2] == i and route.route[1] == j:
+            self.route = self.route[:-1] + route.route[1:]
+        elif self.route[1] == i and route.route[-2] == j:
+            self.route = route.route[:-1] + self.route[1:]
+        elif self.route[1] == i and route.route[1] == j:
+            self.route = route.route[::-1][1:] + self.route[1:]
+        elif self.route[-2] == i and route.route[-2] == j:
+            self.route = self.route[:-1] + route.route[::-1][1:]
+
+    def split(self, i: int, j: int) -> 'Route':
+        """
+        Splits the route into two routes given the two external nodes i and j. Useful for backtracking.
+        """
+
+        index_i = self.route.index(i)
+        index_j = self.route.index(j)
+
+        split_index = max(index_i, index_j)
+
+        other = Route(self.route[split_index:-1])
+        self.route = self.route[:split_index] + [0]
+        return other
+
+
+        
+
 for truck in range(trucks):
     loaded = set()
     routes = []
@@ -87,6 +147,7 @@ for truck in range(trucks):
                     route.insert(-2, i)
                     break
         elif j in loaded and i in loaded:
+
 
                 
 
