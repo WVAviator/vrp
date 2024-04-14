@@ -1,0 +1,16 @@
+{
+  "include": [
+    "wgups",
+    "utilities",
+    "tests"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "venv",
+    "resources"
+  ],
+  "venvPath": ".",
+  "venv": "venv",
+  "pythonVersion": "3.11",
+  "reportMissingImports": true
+}
