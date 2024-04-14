@@ -1,5 +1,5 @@
 from utilities.hash_table import HashTable
-from typing import cast
+from typing import cast, Optional
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
@@ -16,10 +16,10 @@ class Package:
 
 class PackageTable:
     def __init__(self, package_file_path: str):
-        self._package_table = HashTable()
+        self._package_table: HashTable[Package] = HashTable()
         self._load_package_data(package_file_path)
 
-    def get_package(self, package_id: int) -> Package:
+    def get_package(self, package_id: int) -> Optional[Package]:
         return self._package_table.get(package_id)
 
     def _load_package_data(self, package_file_path: str):

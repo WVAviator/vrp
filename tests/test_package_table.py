@@ -5,6 +5,9 @@ def test_package_table():
     package1 = package_table.get_package(1)
     package40 = package_table.get_package(40)
 
+    if package1 is None or package40 is None:
+        assert False
+
     assert package1.package_id == 1
     assert package1.address == "195 W Oakland Ave"
     assert package1.weight == 21
