@@ -1,12 +1,14 @@
 from typing import TypeVar, Generic, List, Tuple, Optional, Hashable
 
-K = TypeVar('K', bound=Hashable)
-V = TypeVar('V')
+K = TypeVar("K", bound=Hashable)
+V = TypeVar("V")
+
 
 class HashTable(Generic[K, V]):
     def __init__(self):
         self.size = 40
         self.table: List[List[Tuple[K, V]]] = [[]] * self.size
+        self.length = 0
 
     def hash(self, key: K):
         hash_value = hash(key) % self.size
@@ -18,6 +20,7 @@ class HashTable(Generic[K, V]):
             self.table[hash_value] = [(key, value)]
         else:
             self.table[hash_value].append((key, value))
+        self.length += 1
 
     def get(self, key: K) -> Optional[V]:
         hash_value = self.hash(key)
@@ -35,4 +38,5 @@ class HashTable(Generic[K, V]):
             for index, item in enumerate(self.table[hash_value]):
                 if item[0] == key:
                     self.table[hash_value].pop(index)
+                    self.length -= 1
                     return
