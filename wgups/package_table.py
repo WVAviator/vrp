@@ -23,6 +23,9 @@ class Package:
         self.note = note
         self.status = "at the hub"
 
+    def formatted_address(self):
+        return self.address + " " + self.zip_code
+
 
 class PackageTable:
     def __init__(self, package_file_path: str):

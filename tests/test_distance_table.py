@@ -20,7 +20,7 @@ def test_all_addresses_correct():
         package = p_table.get_package(i)
         if package == None:
             assert False
-        package_addr = package.address + " " + package.zip_code
+        package_addr = package.formatted_address()
         d_table.get_distance("HUB", package_addr)
 
     assert True
