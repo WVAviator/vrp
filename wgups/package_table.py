@@ -1,7 +1,6 @@
 from utilities.hash_table import HashTable
 from typing import cast, Optional
-from openpyxl import load_workbook
-from openpyxl.worksheet.worksheet import Worksheet
+import csv
 
 class Package:
     def __init__(self, package_id: int, address: str, deadline: str, city: str, zip_code: str, weight: int, note: str):
@@ -23,28 +22,19 @@ class PackageTable:
         return self._package_table.get(package_id)
 
     def _load_package_data(self, package_file_path: str):
-        wb = load_workbook(package_file_path)
+        with open('resources/WGUPS Package File.csv') as csvfile:
+            list_reader = csv.reader(csvfile, delimiter=',')
+            for row in list_reader:
 
-        if wb is None:
-            raise Exception("Package file not found")
+                package_id = int(row[0])
+                address = row[1]
+                deadline = row[5]
+                city = row[2]
+                zip_code = row[4]
+                weight = int(row[6])
+                note = row[7]
 
-        ws = cast( Worksheet, wb.active )
+                package = Package(package_id, address, deadline, city, zip_code, weight, note)
 
-        for row in ws.iter_rows(min_row=9, max_row=ws.max_row, min_col=1, max_col=8):
-
-            row_values = []
-            for cell in row:
-                row_values.append(cell.value)
-
-            package_id = int(row_values[0])
-            address = row_values[1]
-            deadline = row_values[5]
-            city = row_values[2]
-            zip_code = row_values[4]
-            weight = int(row_values[6])
-            note = row_values[7]
-
-            package = Package(package_id, address, deadline, city, zip_code, weight, note)
-
-            self._package_table.insert(package_id, package)
+                self._package_table.insert(package_id, package)
         
