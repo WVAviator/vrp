@@ -15,14 +15,14 @@ class Package:
 
 class PackageTable:
     def __init__(self, package_file_path: str):
-        self._package_table: HashTable[Package] = HashTable()
+        self._package_table: HashTable[int, Package] = HashTable()
         self._load_package_data(package_file_path)
 
     def get_package(self, package_id: int) -> Optional[Package]:
         return self._package_table.get(package_id)
 
-    def _load_package_data(self, package_file_path: str):
-        with open('resources/WGUPS Package File.csv') as csvfile:
+    def _load_package_data(self, file_path: str):
+        with open(file_path) as csvfile:
             list_reader = csv.reader(csvfile, delimiter=',')
             for row in list_reader:
 

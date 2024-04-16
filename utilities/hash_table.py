@@ -1,24 +1,25 @@
-from typing import TypeVar, Generic, List, Tuple, Optional
+from typing import TypeVar, Generic, List, Tuple, Optional, Hashable
 
+K = TypeVar('K', bound=Hashable)
 V = TypeVar('V')
 
-class HashTable(Generic[V]):
+class HashTable(Generic[K, V]):
     def __init__(self):
         self.size = 40
-        self.table: List[List[Tuple[int, V]]] = [[]] * self.size
+        self.table: List[List[Tuple[K, V]]] = [[]] * self.size
 
-    def hash(self, key: int):
-        hash_value = key % self.size
+    def hash(self, key: K):
+        hash_value = hash(key) % self.size
         return hash_value
 
-    def insert(self, key: int, value: V):
+    def insert(self, key: K, value: V):
         hash_value = self.hash(key)
         if self.table[hash_value] is None:
             self.table[hash_value] = [(key, value)]
         else:
             self.table[hash_value].append((key, value))
 
-    def get(self, key: int) -> Optional[V]:
+    def get(self, key: K) -> Optional[V]:
         hash_value = self.hash(key)
         if self.table[hash_value] is None:
             return None
@@ -28,7 +29,7 @@ class HashTable(Generic[V]):
                     return item[1]
             return None
 
-    def remove(self, key: int):
+    def remove(self, key: K):
         hash_value = self.hash(key)
         if self.table[hash_value] is not None:
             for index, item in enumerate(self.table[hash_value]):

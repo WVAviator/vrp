@@ -1,7 +1,7 @@
 from wgups.package_table import PackageTable
 
 def test_package_table():
-    package_table = PackageTable("resources/WGUPS Package File.xlsx")
+    package_table = PackageTable("resources/WGUPS Package File.csv")
     package1 = package_table.get_package(1)
     package40 = package_table.get_package(40)
 
