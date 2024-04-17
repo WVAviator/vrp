@@ -9,3 +9,6 @@ dt = DistanceTable("resources/WGUPS Distance Table.csv")
 
 savings_list = SavingsList(pt, dt)
 print(savings_list)
+
+for _, p1, p2 in savings_list:
+    pass

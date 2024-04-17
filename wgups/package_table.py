@@ -1,30 +1,7 @@
 from utilities.hash_table import HashTable
-from typing import cast, Optional
+from wgups.package import Package
+from typing import Optional
 import csv
-
-
-class Package:
-    def __init__(
-        self,
-        package_id: int,
-        address: str,
-        deadline: str,
-        city: str,
-        zip_code: str,
-        weight: int,
-        note: str,
-    ):
-        self.package_id = package_id
-        self.address = address
-        self.deadline = deadline
-        self.city = city
-        self.zip_code = zip_code
-        self.weight = weight
-        self.note = note
-        self.status = "at the hub"
-
-    def formatted_address(self):
-        return self.address + " " + self.zip_code
 
 
 class PackageTable:
