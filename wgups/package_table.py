@@ -30,10 +30,14 @@ class Package:
 class PackageTable:
     def __init__(self, package_file_path: str):
         self.package_table: HashTable[int, Package] = HashTable()
+        self.package_list = []
         self._load_package_data(package_file_path)
 
     def get_package(self, package_id: int) -> Optional[Package]:
         return self.package_table.get(package_id)
+
+    def get_package_list(self) -> list[Package]:
+        return self.package_list
 
     def _load_package_data(self, file_path: str):
         with open(file_path) as csvfile:
@@ -53,3 +57,4 @@ class PackageTable:
                 )
 
                 self.package_table.insert(package_id, package)
+                self.package_list.append(package)

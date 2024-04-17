@@ -16,8 +16,19 @@ class DistanceTable:
 
         return self.distance_table[a1_index][a2_index]
 
+    def get_address(self, index: int) -> str:
+        return self.address_index_table[index]
+
+    def get_address_index(self, address: str) -> int:
+        addr = self.address_table.get(address)
+        if addr == None:
+            raise Exception("Address not found.")
+        return addr
+
+
     def __init__(self, file_path: str) -> None:
         self.address_table: HashTable[str, int] = HashTable()
+        self.address_index_table = []
         self.distance_table = []
 
         with open(file_path) as csvfile:
@@ -29,6 +40,7 @@ class DistanceTable:
                     address = "HUB"
 
                 self.address_table.insert(address, i)
+                self.address_index_table.append(address)
 
                 values = []
 
