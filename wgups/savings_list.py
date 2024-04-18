@@ -35,7 +35,10 @@ class SavingsList:
         self.savings_list.sort(key=lambda x: x[0], reverse=True)
 
     def __str__(self):
-        return str(self.savings_list)
+        formatted_savings_list = map(
+            lambda x: f"{x[1]} <-> {x[2]}\t{x[0]}", self.savings_list
+        )
+        return "\n".join(formatted_savings_list)
 
     def __len__(self):
         return len(self.savings_list)
