@@ -114,3 +114,18 @@ def test_route_contains():
     assert route.contains_package(1) == True
     assert route.contains_package(2) == True
     assert route.contains_package(3) == False
+
+
+def test_route_efficiency():
+    pt = PackageTable("resources/WGUPS Package File.csv")
+    dt = DistanceTable("resources/WGUPS Distance Table.csv", pt)
+
+    route1 = Route(480.0, 1, dt, pt)
+    route2 = Route(480.0, 1, dt, pt)
+
+    # These are close together and close to the hub, very efficient
+    route1.add_package(21, 19)
+    # These are far apart opposite the HUB, very inefficient
+    route2.add_package(15, 6)
+
+    assert route1.efficiency() > route2.efficiency()

@@ -29,6 +29,9 @@ class Package:
         time_str = f"{int(time // 60)}:{int(time % 60):02d}"
         self.tracking_info.append(f"{time_str} - {message}")
 
+    def __str__(self):
+        return str(self.package_id)
+
 
 def time_str_to_int(time_str: str) -> int:
     if time_str == "EOD":

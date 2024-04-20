@@ -2,6 +2,7 @@ from wgups.distance_table import DistanceTable
 from wgups.package_table import Package, PackageTable
 
 AVERAGE_SPEED = 18
+MAX_PACKAGES = 16
 
 
 class Route:
@@ -35,6 +36,7 @@ class Route:
             )
             time += distance / AVERAGE_SPEED * 60
             package.add_tracking_info(time, f"delivered to {package.address}")
+            package.status = "delivered"
             current = package.package_id
 
     def contains_package(self, package_id: int) -> bool:
@@ -123,10 +125,14 @@ class Route:
         Does not check if grouped packages are together.
         """
 
-        print("Verifying legality of route: ", proposed)
+        # print("Verifying legality of route: ", proposed)
 
         time = self.departure_time
         current = 0
+
+        if len(proposed) > MAX_PACKAGES:
+            print("Proposed route contains too many packages.")
+            return False
 
         for package in proposed:
 
@@ -179,4 +185,8 @@ class Route:
         Returns the efficiency rating of this route, which is number of packages delivered divided by time.
         """
         route_time = self.route_finish_time() - self.departure_time
-        return len(self.deliveries) / route_time
+        efficiency = len(self.deliveries) / route_time
+        print(
+            f"Calculated route efficiency for {len(self.deliveries)} packages delivered in {route_time} minutes: {efficiency}"
+        )
+        return efficiency

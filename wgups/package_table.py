@@ -16,6 +16,21 @@ class PackageTable:
     def get_package_list(self) -> list[Package]:
         return self.package_list
 
+    def update_statuses(self, time: float):
+        for package in self.package_list:
+            if (
+                package.status == "delayed"
+                and time >= package.constraints.delayed_until
+            ):
+                package.status = "at the hub"
+
+    def packages_remaining(self) -> int:
+        count = len(self.package_list)
+        for package in self.package_list:
+            if package.status != "delivered":
+                count -= 1
+        return count
+
     def _load_package_data(self, file_path: str):
         with open(file_path) as csvfile:
             list_reader = csv.reader(csvfile, delimiter=",")
