@@ -32,6 +32,7 @@ while pt.packages_remaining() > 0:
     trucks_at_hub.sort(key=lambda x: x.next_available_time)
     current_truck = trucks_at_hub[0]
 
+    # update package statuses
     pt.update_statuses(current_truck.next_available_time)
 
     print(
@@ -40,7 +41,6 @@ while pt.packages_remaining() > 0:
 
     # generate a new savings list with the packages currently at the hub
     savings_list = SavingsList(pt, dt)
-    # print(savings_list)
 
     print(f"Generated a savings list containing {len(savings_list)} possible routings")
 
@@ -64,6 +64,7 @@ while pt.packages_remaining() > 0:
 
             if new_route.add_package(p1, p2):
                 print(f"Creating new candidate route for packages {p1} and {p2}")
+
                 candidate_routes.append(new_route)
                 assigned_packages.add(p1)
                 assigned_packages.add(p2)
@@ -112,7 +113,13 @@ while pt.packages_remaining() > 0:
         continue
 
     # select the best route (routes with higher priority (sooner deadlines) will be preferred)
+    # routes with incomplete package groups will be ignored
     candidate_routes.sort(key=lambda x: (x.priority, x.efficiency()), reverse=True)
+    best_route_index = 0
+    for i, route in enumerate(candidate_routes):
+        if not route.has_incomplete_group():
+            best_route_index = i
+            break
 
     # simulate the route (update package tracking info) and update the truck next available time
     print(

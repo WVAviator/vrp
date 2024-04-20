@@ -21,6 +21,18 @@ class PackageTable:
             package for package in self.package_list if package.status != "delivered"
         ]
 
+    def get_package_group(self, package_id: int) -> list[int]:
+        """
+        For packages that must be delivered with others, this returns a list of all the packages together to be added to a single route.
+        """
+        package = self.get_package(package_id)
+        if package is None:
+            return []
+
+        return [
+            p.package_id for p in self.package_list if p.group_id == package.group_id
+        ]
+
     def next_package_arrival(self) -> float:
         delayed_packages = [1440.0] + [
             p.constraints.delayed_until
@@ -62,3 +74,32 @@ class PackageTable:
 
                 self.package_table.insert(package_id, package)
                 self.package_list.append(package)
+
+        # Some packages have paired packages that must be grouped together by their group id
+        # This is a union find problem
+        def find(package_id: int) -> int:
+            package = self.get_package(package_id)
+            assert package is not None
+
+            if package.group_id == package_id:
+                return package_id
+            package.group_id = find(package.group_id)
+            return package.group_id
+
+        def union(p1: int, p2: int):
+            group1 = find(p1)
+            group2 = find(p2)
+            if group1 != group2:
+                package1 = self.get_package(group1)
+                package2 = self.get_package(group2)
+                assert package1 is not None and package2 is not None
+                package1.group_id = group2
+
+        for package in self.package_list:
+            for paired_package in package.constraints.paired_packages:
+                union(package.package_id, paired_package)
+
+        for package in self.package_list:
+            find(package.package_id)
+
+        print(f"Loaded {len(self.package_list)} packages")

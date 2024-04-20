@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class Package:
     def __init__(
         self,
@@ -21,6 +24,7 @@ class Package:
             "delayed" if self.constraints.delayed_until > 480 else "at the hub"
         )
         self.tracking_info = []
+        self.group_id = package_id
 
     def formatted_address(self):
         return self.address + " " + self.zip_code

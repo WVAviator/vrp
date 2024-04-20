@@ -1,3 +1,4 @@
+from utilities.hash_table import HashTable
 from wgups.distance_table import DistanceTable
 from wgups.package_table import Package, PackageTable
 
@@ -22,6 +23,18 @@ class Route:
 
     def set_due_back_time(self, time: float):
         self.due_back_time = time + DUE_BACK_BUFFER
+
+    def has_incomplete_group(self) -> bool:
+        """
+        Returns True if the route has a group of packages that are not all included in the route.
+        """
+        counts = HashTable()
+        for p in self.deliveries:
+            counts[p.group_id] = (counts[p.group_id] or 0) + 1
+        for group_id, count in counts.items():
+            if count < len(self.package_table.get_package_group(group_id)):
+                return True
+        return False
 
     def simulate(self):
         """
