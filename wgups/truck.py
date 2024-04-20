@@ -14,3 +14,8 @@ class Truck:
         route.simulate()
         self.next_available_time = route.route_finish_time()
         self.packages.extend(route.deliveries)
+
+    def total_distance_travelled(self) -> float:
+        return sum(
+            [route.calculate_distance(route.deliveries) for route in self.routes]
+        )

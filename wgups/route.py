@@ -16,6 +16,11 @@ class Route:
         self.distance_table = dt
         self.package_table = pt
         self.has_simulated = False
+        self.due_back_time = 1440.0
+        self.priority = 0
+
+    def set_due_back_time(self, time: float):
+        self.due_back_time = time
 
     def simulate(self):
         """
@@ -66,26 +71,36 @@ class Route:
         elif self.deliveries[-1].package_id == paired_package_id:
             proposed_deliveries = self.deliveries[::] + [package]
         else:
-            print(
-                "The paired package was interior to the route or missing from the route."
-            )
+            # print(
+            #     "The paired package was interior to the route or missing from the route."
+            # )
             return False
 
         if self.verify_deliveries(proposed_deliveries):
             self.deliveries = proposed_deliveries
             self.packages.add(package_id)
+            if package.constraints.deadline < 1440.0:
+                self.priority += self.calculate_urgency(package)
             if include_paired:
                 self.packages.add(paired_package_id)
+                if paired_package.constraints.deadline < 1440.0:
+                    self.priority += self.calculate_urgency(paired_package)
             return True
         elif self.verify_deliveries(proposed_deliveries[::-1]):
             self.deliveries = proposed_deliveries[::-1]
             self.packages.add(package_id)
+            if package.constraints.deadline < 1440.0:
+                self.priority += self.calculate_urgency(package)
             if include_paired:
                 self.packages.add(paired_package_id)
+                if paired_package.constraints.deadline < 1440.0:
+                    self.priority += self.calculate_urgency(paired_package)
             return True
+        else:
+            return False
 
-        print("The proposed route was not valid.")
-        return False
+    def calculate_urgency(self, package: Package) -> float:
+        return 1
 
     def merge(self, other: "Route", p1_id: int, p2_id: int) -> bool:
         """
@@ -110,29 +125,57 @@ class Route:
 
         if self.verify_deliveries(merged_deliveries):
             self.deliveries = merged_deliveries
-            self.packages.union(other.packages)
+            self.packages = self.packages.union(other.packages)
+            self.priority += other.priority
             return True
         elif self.verify_deliveries(merged_deliveries[::-1]):
             self.deliveries = merged_deliveries[::-1]
-            self.packages.union(other.packages)
+            self.packages = self.packages.union(other.packages)
+            self.priority += other.priority
             return True
 
         return False
 
-    def verify_deliveries(self, proposed: list[Package]):
+    def calculate_distance(self, route: list[Package]) -> float:
+        """
+        Given a proposed route, calculate the total distance that the truck will travel.
+        """
+        distance = 0
+        current = 0
+        for package in route:
+            distance += self.distance_table.get_package_distance(
+                current, package.package_id
+            )
+            current = package.package_id
+        distance += self.distance_table.get_package_distance(current, 0)
+        return distance
+
+    def calculate_time(self, route: list[Package]) -> float:
+        """
+        Given a proposed route, calculate the total time that the truck will travel.
+        """
+        return self.calculate_distance(route) / AVERAGE_SPEED * 60
+
+    def verify_deliveries(self, proposed: list[Package]) -> bool:
         """
         A method used to determine whether a proposed route is legal. Given the package constraints.
         Does not check if grouped packages are together.
         """
 
-        # print("Verifying legality of route: ", proposed)
+        if len(proposed) > MAX_PACKAGES:
+            # print("Proposed route contains too many packages.")
+            return False
+
+        proposed_route_finish_time = self.departure_time + self.calculate_time(proposed)
+
+        if proposed_route_finish_time > self.due_back_time:
+            # print(
+            #     f"Proposed route finishes after due back time, at {self.route_finish_time()}."
+            # )
+            return False
 
         time = self.departure_time
         current = 0
-
-        if len(proposed) > MAX_PACKAGES:
-            print("Proposed route contains too many packages.")
-            return False
 
         for package in proposed:
 
@@ -141,9 +184,9 @@ class Route:
                 package.constraints.required_truck
                 and package.constraints.required_truck != self.truck_id
             ):
-                print(
-                    f"Proposed route violates truck restraint for package {package.package_id}"
-                )
+                # print(
+                #     f"Proposed route violates truck restraint for package {package.package_id}"
+                # )
                 return False
 
             distance = self.distance_table.get_package_distance(
@@ -154,31 +197,26 @@ class Route:
 
             # Verify arrives on time
             if time > package.constraints.deadline:
-                print(
-                    f"Proposed route violates deadline restraint for package {package.package_id}"
-                )
+                # print(
+                #     f"Proposed route violates deadline restraint for package {package.package_id}"
+                # )
                 return False
 
-        print("Proposed route is valid.")
+        # print("Proposed route is valid.")
         return True
+
+    def route_distance(self) -> float:
+        """
+        Returns the total distance in miles that this route will travel.
+        """
+        return self.calculate_distance(self.deliveries)
 
     def route_finish_time(self) -> float:
         """
         Returns the time in minutes since midnight that this route will finish and the truck will have returned to the HUB.
         """
-        time = self.departure_time
-        current = 0
-        for package in self.deliveries:
-            distance = self.distance_table.get_package_distance(
-                current, package.package_id
-            )
-            time += distance / AVERAGE_SPEED * 60
-            current = package.package_id
-
-        time += (
-            self.distance_table.get_package_distance(current, 0) / AVERAGE_SPEED * 60
-        )
-        return time
+        route_time = self.calculate_time(self.deliveries)
+        return self.departure_time + route_time
 
     def efficiency(self) -> float:
         """
@@ -186,7 +224,7 @@ class Route:
         """
         route_time = self.route_finish_time() - self.departure_time
         efficiency = len(self.deliveries) / route_time
-        print(
-            f"Calculated route efficiency for {len(self.deliveries)} packages delivered in {route_time} minutes: {efficiency}"
-        )
+        # print(
+        #     f"Calculated route efficiency for {len(self.deliveries)} packages delivered in {route_time} minutes: {efficiency}"
+        # )
         return efficiency

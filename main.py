@@ -4,6 +4,9 @@ from wgups.route import Route
 from wgups.savings_list import SavingsList
 from wgups.truck import Truck
 
+# The minimum savings required to consider delivering two packages together
+SAVINGS_ALPHA = 0
+
 
 pt = PackageTable("resources/WGUPS Package File.csv")
 dt = DistanceTable("resources/WGUPS Distance Table.csv", pt)
@@ -23,7 +26,7 @@ truck2 = Truck(2)
 trucks_at_hub = [truck1, truck2]
 
 # while there are packages remaining to be delivered
-while pt.packages_remaining() == False:
+while pt.packages_remaining() > 0:
 
     # for the next available truck at the hub
     trucks_at_hub.sort(key=lambda x: x.next_available_time)
@@ -37,19 +40,28 @@ while pt.packages_remaining() == False:
 
     # generate a new savings list with the packages currently at the hub
     savings_list = SavingsList(pt, dt)
+    # print(savings_list)
 
     print(f"Generated a savings list containing {len(savings_list)} possible routings")
 
     # generate routes from the savings list and package constraints
     assigned_packages = set()
     candidate_routes = []
+
+    # if we know there are delayed packages inbound to the hub, we should schedule routes that return to the hub by this time
+    # if a truck returns a few minutes early, it will be unable to depart with more packages and end up waiting
+    due_back_time = pt.next_package_arrival()
+
     for savings, p1, p2 in savings_list:
-        if savings <= 0:
+
+        if savings <= SAVINGS_ALPHA:
             break
         if p1 not in assigned_packages and p2 not in assigned_packages:
             new_route = Route(
                 current_truck.next_available_time, current_truck.id, dt, pt
             )
+            new_route.set_due_back_time(due_back_time)
+
             if new_route.add_package(p1, p2):
                 print(f"Creating new candidate route for packages {p1} and {p2}")
                 candidate_routes.append(new_route)
@@ -93,30 +105,32 @@ while pt.packages_remaining() == False:
 
     if len(candidate_routes) == 0:
         print("No candidate routes to consider at this time, truck will wait")
-        current_truck.next_available_time += 1
+        current_truck.next_available_time = due_back_time
         if current_truck.next_available_time >= 1440:
             print("End of day reached, stopping simulation")
             break
         continue
 
     # select the best route
-    highest_efficiency_score = 0
-    highest_efficiency_index = 0
-    for i, route in enumerate(candidate_routes):
-        efficiency = route.efficiency()
-        if efficiency > highest_efficiency_score:
-            highest_efficiency_score = efficiency
-            highest_efficiency_index = i
+    candidate_routes.sort(key=lambda x: (x.efficiency()), reverse=True)
 
     # simulate the route (update package tracking info) and update the truck next available time
-    current_truck.add_route(candidate_routes[highest_efficiency_index])
+    print(
+        f"Truck {current_truck.id} will depart at {current_truck.next_available_time} with {len(candidate_routes[0].deliveries)} packages and an estimated return time of {candidate_routes[0].route_finish_time()}"
+    )
+    current_truck.add_route(candidate_routes[0])
 
 
 if pt.packages_remaining() > 0:
     print("Failed to deliver all packages.")
-    print(f"Remaining packages: {pt.packages_remaining()}")
-    print(filter(lambda x: x.status != "delivered", pt.package_list))
+    print(f"Total remaining packages: {pt.packages_remaining()}")
+    print("Undelivered packages: ", pt.get_undelivered_packages())
 else:
     print("All packages delivered!")
     final_time = max([truck.next_available_time for truck in trucks_at_hub])
-    print(f"Total time to deliver all packages: {final_time}")
+    print(
+        f"All packages delivered by: {(final_time // 60):.0f}:{(final_time % 60):.0f}"
+    )
+    print(
+        f"Total distance travelled: {sum([truck.total_distance_travelled() for truck in trucks_at_hub]):.2f} miles"
+    )

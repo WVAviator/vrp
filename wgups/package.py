@@ -29,8 +29,8 @@ class Package:
         time_str = f"{int(time // 60)}:{int(time % 60):02d}"
         self.tracking_info.append(f"{time_str} - {message}")
 
-    def __str__(self):
-        return str(self.package_id)
+    def __repr__(self):
+        return f"{{ id: {self.package_id}, address: {self.address}, deadline: {self.deadline}, status: {self.status} }}"
 
 
 def time_str_to_int(time_str: str) -> int:
@@ -50,6 +50,7 @@ class PackageConstraints:
         self.deadline = time_str_to_int(deadline)
         self.delayed_until = 480
         self.updated_address = ""
+        self.updated_zip_code = ""
         self.required_truck = None
         self.paired_packages = []
 
@@ -59,7 +60,10 @@ class PackageConstraints:
             self.delayed_until = time_str_to_int(delay_time)
         elif note.startswith("Wrong address"):
             self.delayed_until = time_str_to_int("10:20 AM")
+
+            # Hardcoding the updated address since it's not included in the input materials
             self.updated_address = "410 S State St"
+            self.updated_zip_code = "84111"
         elif note.startswith("Can only be on truck"):
             self.required_truck = int(note.split(" ")[-1])
         elif note.startswith("Must be delivered with"):

@@ -9,8 +9,10 @@ class DistanceTable:
         a1_index = self.address_table.get(addr1)
         a2_index = self.address_table.get(addr2)
 
-        if a1_index == None or a2_index == None:
-            raise Exception("Address not found.")
+        if a1_index == None:
+            raise Exception(f"Address not found: {addr1}")
+        if a2_index == None:
+            raise Exception(f"Address not found: {addr2}")
 
         if a1_index < a2_index:
             a1_index, a2_index = a2_index, a1_index
@@ -23,7 +25,7 @@ class DistanceTable:
     def get_address_index(self, address: str) -> int:
         addr = self.address_table.get(address)
         if addr == None:
-            raise Exception("Address not found.")
+            raise Exception(f"Address not found: {address}")
         return addr
 
     def get_package_distance(self, pid1: int, pid2: int):

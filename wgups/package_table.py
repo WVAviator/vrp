@@ -7,7 +7,7 @@ import csv
 class PackageTable:
     def __init__(self, package_file_path: str):
         self.package_table: HashTable[int, Package] = HashTable()
-        self.package_list = []
+        self.package_list: list[Package] = []
         self._load_package_data(package_file_path)
 
     def get_package(self, package_id: int) -> Optional[Package]:
@@ -16,6 +16,19 @@ class PackageTable:
     def get_package_list(self) -> list[Package]:
         return self.package_list
 
+    def get_undelivered_packages(self) -> list[Package]:
+        return [
+            package for package in self.package_list if package.status != "delivered"
+        ]
+
+    def next_package_arrival(self) -> float:
+        delayed_packages = [1440.0] + [
+            p.constraints.delayed_until
+            for p in self.package_list
+            if p.status == "delayed"
+        ]
+        return min(delayed_packages)
+
     def update_statuses(self, time: float):
         for package in self.package_list:
             if (
@@ -23,13 +36,12 @@ class PackageTable:
                 and time >= package.constraints.delayed_until
             ):
                 package.status = "at the hub"
+                if package.constraints.updated_address != "":
+                    package.address = package.constraints.updated_address
+                    package.zip_code = package.constraints.updated_zip_code
 
     def packages_remaining(self) -> int:
-        count = len(self.package_list)
-        for package in self.package_list:
-            if package.status != "delivered":
-                count -= 1
-        return count
+        return len(self.get_undelivered_packages())
 
     def _load_package_data(self, file_path: str):
         with open(file_path) as csvfile:
