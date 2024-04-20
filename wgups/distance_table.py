@@ -1,6 +1,7 @@
 import csv
 
 from utilities.hash_table import HashTable
+from wgups.package_table import PackageTable
 
 
 class DistanceTable:
@@ -25,8 +26,17 @@ class DistanceTable:
             raise Exception("Address not found.")
         return addr
 
+    def get_package_distance(self, pid1: int, pid2: int):
+        p1 = self.package_table.get_package(pid1)
+        p2 = self.package_table.get_package(pid2)
 
-    def __init__(self, file_path: str) -> None:
+        addr1 = p1.formatted_address() if p1 != None else "HUB"
+        addr2 = p2.formatted_address() if p2 != None else "HUB"
+
+        return self.get_distance(addr1, addr2)
+
+    def __init__(self, file_path: str, package_table: PackageTable) -> None:
+        self.package_table = package_table
         self.address_table: HashTable[str, int] = HashTable()
         self.address_index_table = []
         self.distance_table = []

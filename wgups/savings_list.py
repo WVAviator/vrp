@@ -14,6 +14,12 @@ class SavingsList:
         # O(n^2) - uses nested loops to compare each package to every other package to calculate the savings.
         for i in range(len(package_list)):
             for j in range(i + 1, len(package_list)):
+                if (
+                    package_list[i].status != "at the hub"
+                    or package_list[j].status != "at the hub"
+                ):
+                    continue
+
                 # Savings is the difference between two separate trips and one round trip:
                 # (2hx + 2hy) - (hx + xy + hy)
                 # Which can be algebraically simplified to hx + hy - xy

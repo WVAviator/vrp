@@ -3,7 +3,8 @@ from wgups.package_table import PackageTable
 
 
 def test_basic_import():
-    d_table = DistanceTable("resources/WGUPS Distance Table.csv")
+    p_table = PackageTable("resources/WGUPS Package File.csv")
+    d_table = DistanceTable("resources/WGUPS Distance Table.csv", p_table)
 
     assert d_table.get_distance("1060 Dalton Ave S 84104", "HUB") == 7.2
     assert (
@@ -13,8 +14,8 @@ def test_basic_import():
 
 
 def test_all_addresses_correct():
-    d_table = DistanceTable("resources/WGUPS Distance Table.csv")
     p_table = PackageTable("resources/WGUPS Package File.csv")
+    d_table = DistanceTable("resources/WGUPS Distance Table.csv", p_table)
 
     for i in range(1, 41):
         package = p_table.get_package(i)

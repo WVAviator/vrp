@@ -16,11 +16,18 @@ class Package:
         self.zip_code = zip_code
         self.weight = weight
         self.note = note
-        self.status = "at the hub"
         self.constraints = PackageConstraints(deadline, note)
+        self.status = (
+            "delayed" if self.constraints.delayed_until > 480 else "at the hub"
+        )
+        self.tracking_info = []
 
     def formatted_address(self):
         return self.address + " " + self.zip_code
+
+    def add_tracking_info(self, time: float, message: str):
+        time_str = f"{int(time // 60)}:{int(time % 60):02d}"
+        self.tracking_info.append(f"{time_str} - {message}")
 
 
 def time_str_to_int(time_str: str) -> int:
@@ -38,7 +45,7 @@ def time_str_to_int(time_str: str) -> int:
 class PackageConstraints:
     def __init__(self, deadline: str, note: str):
         self.deadline = time_str_to_int(deadline)
-        self.delayed_until = 0
+        self.delayed_until = 480
         self.updated_address = ""
         self.required_truck = None
         self.paired_packages = []
