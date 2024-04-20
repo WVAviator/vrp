@@ -7,7 +7,7 @@ V = TypeVar("V")
 class HashTable(Generic[K, V]):
     def __init__(self):
         self.size = 40
-        self.table: List[List[Tuple[K, V]]] = [[]] * self.size
+        self.table: List[List[Tuple[K, V]]] = [[] for _ in range(self.size)]
         self.length = 0
 
     def hash(self, key: K):
@@ -19,6 +19,10 @@ class HashTable(Generic[K, V]):
         if self.table[hash_value] is None:
             self.table[hash_value] = [(key, value)]
         else:
+            for index, item in enumerate(self.table[hash_value]):
+                if item[0] == key:
+                    self.table[hash_value][index] = (key, value)
+                    return
             self.table[hash_value].append((key, value))
         self.length += 1
 
@@ -40,3 +44,16 @@ class HashTable(Generic[K, V]):
                     self.table[hash_value].pop(index)
                     self.length -= 1
                     return
+
+    def items(self) -> List[Tuple[K, V]]:
+        items = []
+        for bucket in self.table:
+            for item in bucket:
+                items.append(item)
+        return items
+
+    def __getitem__(self, key: K) -> Optional[V]:
+        return self.get(key)
+
+    def __setitem__(self, key: K, value: V):
+        self.insert(key, value)
