@@ -2,7 +2,7 @@ from wgups.distance_table import DistanceTable
 from wgups.package_table import PackageTable
 
 # Determines the savings multiplier for routes with priority packages
-PRIORITY_MODIFIER = 0.6
+PRIORITY_MODIFIER = 0.0
 
 
 class SavingsList:

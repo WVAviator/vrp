@@ -5,7 +5,7 @@ from wgups.savings_list import SavingsList
 from wgups.truck import Truck
 
 # The minimum savings required to consider delivering two packages together
-SAVINGS_ALPHA = 0
+SAVINGS_ALPHA = 1
 
 
 pt = PackageTable("resources/WGUPS Package File.csv")
@@ -111,8 +111,8 @@ while pt.packages_remaining() > 0:
             break
         continue
 
-    # select the best route
-    candidate_routes.sort(key=lambda x: (x.efficiency()), reverse=True)
+    # select the best route (routes with higher priority (sooner deadlines) will be preferred)
+    candidate_routes.sort(key=lambda x: (x.priority, x.efficiency()), reverse=True)
 
     # simulate the route (update package tracking info) and update the truck next available time
     print(
@@ -129,7 +129,7 @@ else:
     print("All packages delivered!")
     final_time = max([truck.next_available_time for truck in trucks_at_hub])
     print(
-        f"All packages delivered by: {(final_time // 60):.0f}:{(final_time % 60):.0f}"
+        f"All packages delivered by: {(final_time / 60):02.0f}:{(final_time % 60):02.0f}"
     )
     print(
         f"Total distance travelled: {sum([truck.total_distance_travelled() for truck in trucks_at_hub]):.2f} miles"

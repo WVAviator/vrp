@@ -3,6 +3,7 @@ from wgups.package_table import Package, PackageTable
 
 AVERAGE_SPEED = 18
 MAX_PACKAGES = 16
+DUE_BACK_BUFFER = 15
 
 
 class Route:
@@ -20,7 +21,7 @@ class Route:
         self.priority = 0
 
     def set_due_back_time(self, time: float):
-        self.due_back_time = time
+        self.due_back_time = time + DUE_BACK_BUFFER
 
     def simulate(self):
         """
@@ -80,27 +81,32 @@ class Route:
             self.deliveries = proposed_deliveries
             self.packages.add(package_id)
             if package.constraints.deadline < 1440.0:
-                self.priority += self.calculate_urgency(package)
+                self.priority += self.calculate_priority(package)
             if include_paired:
                 self.packages.add(paired_package_id)
                 if paired_package.constraints.deadline < 1440.0:
-                    self.priority += self.calculate_urgency(paired_package)
+                    self.priority += self.calculate_priority(paired_package)
             return True
         elif self.verify_deliveries(proposed_deliveries[::-1]):
             self.deliveries = proposed_deliveries[::-1]
             self.packages.add(package_id)
             if package.constraints.deadline < 1440.0:
-                self.priority += self.calculate_urgency(package)
+                self.priority += self.calculate_priority(package)
             if include_paired:
                 self.packages.add(paired_package_id)
                 if paired_package.constraints.deadline < 1440.0:
-                    self.priority += self.calculate_urgency(paired_package)
+                    self.priority += self.calculate_priority(paired_package)
             return True
         else:
             return False
 
-    def calculate_urgency(self, package: Package) -> float:
-        return 1
+    def calculate_priority(self, package: Package) -> float:
+        """
+        Calculates the priority value this package adds to the route. Packages with sooner deadlines will have higher priority.
+        The priority is effectively the inverse of the time remaining to deliver this package.
+        """
+        time_remaining = package.constraints.deadline - self.departure_time
+        return 1 / time_remaining if time_remaining > 0 else 0
 
     def merge(self, other: "Route", p1_id: int, p2_id: int) -> bool:
         """
