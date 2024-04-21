@@ -1,3 +1,4 @@
+from typing import Optional
 from wgups.distance_table import DistanceTable
 from wgups.package_table import PackageTable
 
@@ -7,12 +8,24 @@ PRIORITY_MODIFIER = 0.0
 
 class SavingsList:
     """
-    A wrapper around a standard list which contains the savings gained by delivering two packages together rather than in separate trips to and from the hub. A key component of the Clarke-Wright Savings Algorithm.
+    A wrapper around a standard list which contains the savings gained by delivering two packages together rather than in separate trips to and from the hub. A key component of the Clarke-Wright Savings Algorithm. Can optionally provide a list of package IDs to limit the number of packages in the calculation.
     """
 
-    def __init__(self, pt: PackageTable, dt: DistanceTable):
+    def __init__(
+        self,
+        pt: PackageTable,
+        dt: DistanceTable,
+        sub_package_list: Optional[list[int]] = None,
+    ):
         self.savings_list = []
-        package_list = pt.get_package_list()
+        if sub_package_list:
+            package_list = []
+            for p in sub_package_list:
+                package = pt.get_package(p)
+                assert package != None
+                package_list.append(package)
+        else:
+            package_list = pt.get_package_list()
 
         # O(n^2) - uses nested loops to compare each package to every other package to calculate the savings.
         for i in range(len(package_list)):

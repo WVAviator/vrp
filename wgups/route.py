@@ -1,3 +1,4 @@
+from typing import Optional
 from utilities.hash_table import HashTable
 from wgups.distance_table import DistanceTable
 from wgups.package_table import Package, PackageTable
@@ -22,19 +23,22 @@ class Route:
         self.priority = 0
 
     def set_due_back_time(self, time: float):
+        """
+        Updates the route's due back time which limits the route from being extended beyond that time, plus an additional buffer.
+        """
         self.due_back_time = time + DUE_BACK_BUFFER
 
-    def has_incomplete_group(self) -> bool:
+    def has_incomplete_group(self) -> Optional[int]:
         """
-        Returns True if the route has a group of packages that are not all included in the route.
+        Returns the group id if the route has a group of packages that are not all included in the route.
         """
         counts = HashTable()
         for p in self.deliveries:
             counts[p.group_id] = (counts[p.group_id] or 0) + 1
         for group_id, count in counts.items():
             if count < len(self.package_table.get_package_group(group_id)):
-                return True
-        return False
+                return group_id
+        return None
 
     def simulate(self):
         """
@@ -247,3 +251,11 @@ class Route:
         #     f"Calculated route efficiency for {len(self.deliveries)} packages delivered in {route_time} minutes: {efficiency}"
         # )
         return efficiency
+
+    def __repr__(self):
+        # HUB -> 1 -> 2 -> 3 -> HUB
+        route_str = "HUB"
+        for package in self.deliveries:
+            route_str += f" -> {package.package_id}"
+        route_str += " -> HUB"
+        return route_str

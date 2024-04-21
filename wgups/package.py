@@ -1,5 +1,7 @@
 from typing import Optional
 
+from utilities.time import time_str_to_int
+
 
 class Package:
     def __init__(
@@ -27,26 +29,20 @@ class Package:
         self.group_id = package_id
 
     def formatted_address(self):
+        """
+        Returns the address formatted with zip code to be used in distance table lookups.
+        """
         return self.address + " " + self.zip_code
 
     def add_tracking_info(self, time: float, message: str):
+        """
+        Appends a message to the package's tracking info.
+        """
         time_str = f"{int(time // 60)}:{int(time % 60):02d}"
         self.tracking_info.append(f"{time_str} - {message}")
 
     def __repr__(self):
         return f"{{ id: {self.package_id}, address: {self.address}, deadline: {self.deadline}, status: {self.status} }}"
-
-
-def time_str_to_int(time_str: str) -> int:
-    if time_str == "EOD":
-        return 1440
-    time, period = time_str.split(" ")
-    hours_str, minutes_str = time.split(":")
-    hours = int(hours_str)
-    minutes = int(minutes_str)
-    if period.upper() == "PM":
-        hours += 12
-    return hours * 60 + minutes
 
 
 class PackageConstraints:
@@ -58,6 +54,7 @@ class PackageConstraints:
         self.required_truck = None
         self.paired_packages = []
 
+        # This parses the package info and notes into usable logic and restrictions for measuring package constraints
         if note.startswith("Delayed on flight"):
             words = note.split(" ")
             delay_time = " ".join(words[-2:])
@@ -66,6 +63,7 @@ class PackageConstraints:
             self.delayed_until = time_str_to_int("10:20 AM")
 
             # Hardcoding the updated address since it's not included in the input materials
+            # In a production implementation, this information will be able to be added once it becomes available
             self.updated_address = "410 S State St"
             self.updated_zip_code = "84111"
         elif note.startswith("Can only be on truck"):

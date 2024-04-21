@@ -11,19 +11,28 @@ class PackageTable:
         self._load_package_data(package_file_path)
 
     def get_package(self, package_id: int) -> Optional[Package]:
+        """
+        Returns the package object with the given package_id
+        """
         return self.package_table.get(package_id)
 
     def get_package_list(self) -> list[Package]:
+        """
+        Returns a full list of packages
+        """
         return self.package_list
 
     def get_undelivered_packages(self) -> list[Package]:
+        """
+        Returns a list of packages that have not yet been delivered
+        """
         return [
             package for package in self.package_list if package.status != "delivered"
         ]
 
     def get_package_group(self, package_id: int) -> list[int]:
         """
-        For packages that must be delivered with others, this returns a list of all the packages together to be added to a single route.
+        For packages that must be delivered with others, this returns a list of all the packages together that should be added to a single route.
         """
         package = self.get_package(package_id)
         if package is None:
@@ -34,6 +43,9 @@ class PackageTable:
         ]
 
     def next_package_arrival(self) -> float:
+        """
+        This returns the time that the next package should be arriving at the hub ready for delivery.
+        """
         delayed_packages = [1440.0] + [
             p.constraints.delayed_until
             for p in self.package_list
@@ -42,17 +54,26 @@ class PackageTable:
         return min(delayed_packages)
 
     def update_statuses(self, time: float):
+        """
+        This updates the package statuses based on the provided time. Useful for determining when delayed packages have finally arrived to the hub and updating their status so that they may appear in the savings lists.
+        """
         for package in self.package_list:
             if (
                 package.status == "delayed"
                 and time >= package.constraints.delayed_until
             ):
                 package.status = "at the hub"
+                package.add_tracking_info(
+                    package.constraints.delayed_until, "Arrived at the hub"
+                )
                 if package.constraints.updated_address != "":
                     package.address = package.constraints.updated_address
                     package.zip_code = package.constraints.updated_zip_code
 
     def packages_remaining(self) -> int:
+        """
+        Returns the number of packages that have not yet been delivered
+        """
         return len(self.get_undelivered_packages())
 
     def _load_package_data(self, file_path: str):
