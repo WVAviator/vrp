@@ -129,3 +129,60 @@ def test_route_efficiency():
     route2.add_package(15, 6)
 
     assert route1.efficiency() > route2.efficiency()
+
+
+def test_remaining_group_packages():
+    pt = PackageTable("resources/WGUPS Package File.csv")
+    dt = DistanceTable("resources/WGUPS Distance Table.csv", pt)
+
+    route = Route(480.0, 1, dt, pt)
+
+    # There are six packages in the group: 13, 14, 15, 16, 19, 20
+    assert route.add_package(13, 19)
+
+    assert route.remaining_in_group(13, route.deliveries) == 4
+
+
+def test_has_incomplete_group():
+    pt = PackageTable("resources/WGUPS Package File.csv")
+    dt = DistanceTable("resources/WGUPS Distance Table.csv", pt)
+
+    route = Route(480.0, 1, dt, pt)
+
+    assert route.add_package(1, 2)
+    assert not route.has_incomplete_group()
+    assert route.has_incomplete_group() == None
+
+    assert route.add_package(19, 2)
+    possible_group_ids = [13, 14, 15, 16, 19, 20]
+    assert route.has_incomplete_group()
+    assert route.has_incomplete_group() in possible_group_ids
+
+
+def test_insert_package():
+    pt = PackageTable("resources/WGUPS Package File.csv")
+    dt = DistanceTable("resources/WGUPS Distance Table.csv", pt)
+
+    route = Route(480.0, 2, dt, pt)
+
+    # Packages 1 and 17 form a standard route, but package 40 falls directly between them
+    # Packages 7 and 18 create a wider arc
+    # The insertion should logically occur between 1 and 17
+    assert route.add_package(1, 17)
+    assert route.add_package(7, 1)
+    assert route.add_package(14, 17)
+    assert route.insert_package(40)
+
+    # route should be 1 -> 17 -> 40 -> 7 -> 18
+    print(route)
+    assert route.deliveries[2].package_id == 40
+
+
+def test_calculate_distance():
+    pt = PackageTable("resources/WGUPS Package File.csv")
+    dt = DistanceTable("resources/WGUPS Distance Table.csv", pt)
+
+    route = Route(480.0, 2, dt, pt)
+    assert route.add_package(1, 2)
+
+    assert route.calculate_distance(route.deliveries) == 7.8

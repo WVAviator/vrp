@@ -6,6 +6,7 @@ from wgups.package_table import Package, PackageTable
 AVERAGE_SPEED = 18
 MAX_PACKAGES = 16
 DUE_BACK_BUFFER = 15
+DEBUG = False
 
 
 class Route:
@@ -65,12 +66,87 @@ class Route:
     def contains_package(self, package_id: int) -> bool:
         return package_id in self.packages
 
+    def insert_package(self, package_id: int) -> bool:
+        """
+        Attempts to insert a package somewhere in the route in the most efficient place that will not violate any constraints.
+        """
+        if package_id in self.packages:
+            return True
+
+        package = self.package_table.get_package(package_id)
+        if package == None:
+            raise Exception("An invalid package ID was provided.")
+
+        route = self.deliveries[::]
+
+        best_route = None
+        best_distance = float("inf")
+        for i in range(len(route) + 1):
+            route.insert(i, package)
+            if self.verify_deliveries(route):
+                distance = self.calculate_distance(route)
+                if distance < best_distance:
+                    if DEBUG:
+                        print(
+                            f"Inserting package {package_id} at position {i} results in a total distance of {distance}"
+                        )
+                    best_distance = distance
+                    best_route = route[::]
+            route.pop(i)
+
+        if best_route == None:
+            # print(f"No possible insertion point for package {package_id} was found.")
+            return False
+
+        self.deliveries = best_route
+        self.packages.add(package_id)
+        if package.constraints.deadline < 1440.0:
+            self.priority += self.calculate_priority(package)
+
+        return True
+
+    def add_all_packages(self, package_ids: list[int]):
+        """
+        Permutes through all possible combinations of packages and adds the best one to the route.
+        """
+        route = []
+        for package_id in package_ids:
+            package = self.package_table.get_package(package_id)
+            if package == None:
+                raise Exception("An invalid package ID was provided.")
+            route.append(package)
+
+        best_route = None
+        best_distance = float("inf")
+        for i in range(len(route)):
+            for j in range(i + 1, len(route)):
+                route[i], route[j] = route[j], route[i]
+                if self.verify_deliveries(route):
+                    distance = self.calculate_distance(route)
+                    if distance < best_distance:
+                        best_distance = distance
+                        best_route = route[::]
+                route[i], route[j] = route[j], route[i]
+
+        if best_route == None:
+            print(f"No possible permutation of the route {route} is valid.")
+            return False
+
+        self.deliveries = best_route
+        for package in best_route:
+            self.packages.add(package.package_id)
+            if package.constraints.deadline < 1440.0:
+                self.priority += self.calculate_priority(package)
+        return True
+
     def add_package(self, package_id: int, paired_package_id: int):
         """
         Given a package_id to potentially add to this route, as well as the paired_package_id which already exists in the route and results in savings, add the package to the route if no constraints are violated and the paired_package_id is not interior to the route. Returns True if the package was successfully added, or False otherwise.
         """
 
         if self.has_simulated:
+            if DEBUG:
+                print("Route has already been simulated.")
             return False
 
         package = self.package_table.get_package(package_id)
@@ -89,9 +165,10 @@ class Route:
         elif self.deliveries[-1].package_id == paired_package_id:
             proposed_deliveries = self.deliveries[::] + [package]
         else:
-            # print(
-            #     "The paired package was interior to the route or missing from the route."
-            # )
+            if DEBUG:
+                print(
+                    "The paired package was interior to the route or missing from the route."
+                )
             return False
 
         if self.verify_deliveries(proposed_deliveries):
@@ -179,22 +256,50 @@ class Route:
         """
         return self.calculate_distance(route) / AVERAGE_SPEED * 60
 
+    def remaining_in_group(self, group_id: int, proposed_route: list[Package]) -> int:
+        """
+        Given a group id, returns the number of packages in the group that are not already in the route.
+        """
+        packages_in_group = self.package_table.get_package_group(group_id)
+        group_package = self.package_table.get_package(group_id)
+        if group_package == None:
+            raise Exception("Invalid group ID provided.")
+        group_id = group_package.group_id
+        packages_in_route = [p for p in proposed_route if p.group_id == group_id]
+        if DEBUG:
+            print(
+                f"Group {group_id} has {len(packages_in_group)} packages, {len(packages_in_route)}/{len(proposed_route)} are in the proposed route."
+            )
+        return len(packages_in_group) - len(packages_in_route)
+
     def verify_deliveries(self, proposed: list[Package]) -> bool:
         """
         A method used to determine whether a proposed route is legal. Given the package constraints.
         Does not check if grouped packages are together.
         """
 
-        if len(proposed) > MAX_PACKAGES:
-            # print("Proposed route contains too many packages.")
+        # if there are packages that are part of a group missing from this route
+        # there should be enough remaining space to add them
+        max_packages = MAX_PACKAGES
+        incomplete_group = self.has_incomplete_group()
+        if incomplete_group != None:
+            remaining_in_group = self.remaining_in_group(incomplete_group, proposed)
+            max_packages -= remaining_in_group
+
+        if len(proposed) > max_packages:
+            if DEBUG:
+                print(
+                    f"Proposed route contains too many packages. Maximum is {max_packages}"
+                )
             return False
 
         proposed_route_finish_time = self.departure_time + self.calculate_time(proposed)
 
         if proposed_route_finish_time > self.due_back_time:
-            # print(
-            #     f"Proposed route finishes after due back time, at {self.route_finish_time()}."
-            # )
+            if DEBUG:
+                print(
+                    f"Proposed route finishes after due back time, at {self.route_finish_time()}."
+                )
             return False
 
         time = self.departure_time
@@ -207,9 +312,10 @@ class Route:
                 package.constraints.required_truck
                 and package.constraints.required_truck != self.truck_id
             ):
-                # print(
-                #     f"Proposed route violates truck restraint for package {package.package_id}"
-                # )
+                if DEBUG:
+                    print(
+                        f"Proposed route violates truck restraint for package {package.package_id}"
+                    )
                 return False
 
             distance = self.distance_table.get_package_distance(
@@ -220,12 +326,14 @@ class Route:
 
             # Verify arrives on time
             if time > package.constraints.deadline:
-                # print(
-                #     f"Proposed route violates deadline restraint for package {package.package_id}"
-                # )
+                if DEBUG:
+                    print(
+                        f"Proposed route violates deadline restraint for package {package.package_id}"
+                    )
                 return False
 
-        # print("Proposed route is valid.")
+        if DEBUG:
+            print("Proposed route is valid.")
         return True
 
     def route_distance(self) -> float:
@@ -256,6 +364,22 @@ class Route:
         # HUB -> 1 -> 2 -> 3 -> HUB
         route_str = "HUB"
         for package in self.deliveries:
-            route_str += f" -> {package.package_id}"
-        route_str += " -> HUB"
+            route_str += f" -> {package.package_id:02d}"
+        route_str += " -> HUB\n   "
+
+        current = 0
+        for package in self.deliveries:
+            distance = self.distance_table.get_package_distance(
+                current, package.package_id
+            )
+            distance_str = (
+                f"{distance:.2f}" if distance // 10 == 0 else f"{distance:.1f}"
+            )
+            route_str += f"{distance_str}  "
+            current = package.package_id
+
+        distance = self.distance_table.get_package_distance(current, 0)
+        distance_str = f"{distance:.2f}" if distance // 10 == 0 else f"{distance:.1f}"
+        route_str += f"{distance_str}"
+
         return route_str

@@ -81,4 +81,32 @@ class RouteFactory:
                 ):
                     candidate_routes.pop(route2_index)
 
-        return candidate_routes
+        valid_routes = self.complete_subgroup(candidate_routes)
+        return valid_routes
+
+    def complete_subgroup(self, candidate_routes: list[Route]):
+        """
+        In the cases where a candidate route contains packages that are a part of a group, this tries to add those packages to the route and returns all valid routes in which a group is either fully represented in or absent from the route.
+        """
+
+        valid_routes = []
+        for route in candidate_routes:
+            incomplete_group = route.has_incomplete_group()
+            if incomplete_group:
+                # to try and make this route legal, extend the due back time
+                route.set_due_back_time(1440.0)
+                package_group = self.pt.get_package_group(incomplete_group)
+
+                can_complete = True
+                for package in package_group:
+                    if not route.insert_package(package):
+                        can_complete = False
+                        break
+
+                if can_complete:
+                    valid_routes.append(route)
+
+            else:
+                valid_routes.append(route)
+
+        return valid_routes
