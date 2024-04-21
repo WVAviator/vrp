@@ -5,6 +5,10 @@ V = TypeVar("V")
 
 
 class HashTable(Generic[K, V]):
+    """
+    A basic hash table implementation that uses chaining with arrays to handle collisions.
+    """
+
     def __init__(self):
         self.size = 40
         self.table: List[List[Tuple[K, V]]] = [[] for _ in range(self.size)]
