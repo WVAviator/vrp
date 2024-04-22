@@ -25,3 +25,11 @@ class Truck:
         return sum(
             [route.calculate_distance(route.deliveries) for route in self.routes]
         )
+
+    def last_route_finish_time(self) -> float:
+        """
+        Returns the finish time of the last route this truck completed.
+        """
+        if not self.routes:
+            return 0.0
+        return self.routes[-1].route_finish_time()

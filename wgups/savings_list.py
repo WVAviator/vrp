@@ -2,9 +2,6 @@ from typing import Optional
 from wgups.distance_table import DistanceTable
 from wgups.package_table import PackageTable
 
-# Determines the savings multiplier for routes with priority packages
-PRIORITY_MODIFIER = 0.2
-
 
 class SavingsList:
     """
@@ -15,6 +12,7 @@ class SavingsList:
         self,
         pt: PackageTable,
         dt: DistanceTable,
+        priority_modifier: float = 0.0,
         sub_package_list: Optional[list[int]] = None,
     ):
         self.savings_list = []
@@ -47,9 +45,9 @@ class SavingsList:
                 # Priority is a modification to the base Clarke-Wright algorithm to prioritize packages with earlier deadlines.
                 priority = 1
                 if self.package_list[i].constraints.deadline < 1440.0:
-                    priority += PRIORITY_MODIFIER
+                    priority += priority_modifier
                 if self.package_list[j].constraints.deadline < 1440.0:
-                    priority += PRIORITY_MODIFIER
+                    priority += priority_modifier
 
                 self.savings_list.append(
                     (
