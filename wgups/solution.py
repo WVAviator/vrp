@@ -14,6 +14,9 @@ class Solution:
         return s
 
     def print_routes(self):
+        """
+        Pretty-prints the route information for all trucks.
+        """
         for t in self.trucks:
             print(f"Truck {t.id}:")
             for r in t.routes:
@@ -23,6 +26,9 @@ class Solution:
             print("\n")
 
     def print_truck_info(self, truck_id: int) -> bool:
+        """
+        Pretty-prints the information for the provided truck_id.
+        """
         for t in self.trucks:
             if t.id == truck_id:
                 t.print_truck_info()
@@ -30,6 +36,9 @@ class Solution:
         return False
 
     def print_package_info(self, package_id: int, time: float = 1440.0):
+        """
+        Pretty-prints package tracking information given a package_id and optional time.
+        """
         for t in self.trucks:
             for r in t.routes:
                 for p in r.deliveries:

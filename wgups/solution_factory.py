@@ -15,6 +15,9 @@ class SolutionFactory:
         pass
 
     def generate_best_solution(self):
+        """
+        Tries multiple different values for the priority_modifier variable used when generate savings lists for the Clarke Wright algorithm. Returns the best solve.
+        """
         best_solution = None
 
         priority_modifier = 0.00
@@ -33,6 +36,9 @@ class SolutionFactory:
         return best_solution
 
     def generate_solution(self, priority_modifier) -> Optional[Solution]:
+        """
+        Generates a solution based on the provided priority_modifier variable (which affects the weight of priority packages in the savings list generation)
+        """
         pt = PackageTable("resources/WGUPS Package File.csv")
         dt = DistanceTable("resources/WGUPS Distance Table.csv", pt)
 

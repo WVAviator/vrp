@@ -1,21 +1,21 @@
-from utilities.time import time_float_to_str
-from wgups.distance_table import DistanceTable
-from wgups.package_table import PackageTable
-from wgups.route import Route
-from wgups.route_factory import RouteFactory
-from wgups.savings_list import SavingsList
-from wgups.truck import Truck
 from wgups.solution_factory import SolutionFactory
 
-solution_factory = SolutionFactory()
 
+# Uses the solution factory to heuristically generate multiple solutions and return the best one.
+solution_factory = SolutionFactory()
 best_solution = solution_factory.generate_best_solution()
 
+if best_solution == None:
+    print("No solution found. Exiting...")
+
+print("\n\n\n==== Best Solution ====\n")
 print(best_solution)
+print("\n")
 
+# REPL start
 state = ""
-
 while state != "q":
+    # Package tracking view state
     if state == "p":
         print(
             "To track a package, enter the package ID followed (optionally) by the time (00:00-24:00) separated by a space. Enter 'b' to go back."
@@ -49,11 +49,14 @@ while state != "q":
         if not best_solution.print_package_info(package_id, time):
             print("Package ID not found.\n")
 
+    # Route information view state
     elif state == "r":
         print("==== Route Information ====\n")
         best_solution.print_routes()
         print("===========================\n")
         state = ""
+
+    # Truck information view state
     elif state == "t":
         print(
             "Enter the truck id to view distance and route info. Enter 'b' to go back."
@@ -68,6 +71,8 @@ while state != "q":
         truck_id = int(user_input)
         if not best_solution.print_truck_info(truck_id):
             print("Invalid truck id.\n")
+
+    # Main view state
     else:
         print(
             "Enter 'p' to track a package, 'r' to view routes, or 't' to view truck information. Enter 'q' to quit."
