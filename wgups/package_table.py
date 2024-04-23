@@ -63,12 +63,16 @@ class PackageTable:
                 and time >= package.constraints.delayed_until
             ):
                 package.status = "at the hub"
-                package.add_tracking_info(
-                    package.constraints.delayed_until, "Arrived at the hub"
-                )
                 if package.constraints.updated_address != "":
                     package.address = package.constraints.updated_address
                     package.zip_code = package.constraints.updated_zip_code
+                    package.add_tracking_info(
+                        package.constraints.delayed_until, "Updated package address"
+                    )
+                else:
+                    package.add_tracking_info(
+                        package.constraints.delayed_until, "Arrived at the hub"
+                    )
 
     def packages_remaining(self) -> int:
         """

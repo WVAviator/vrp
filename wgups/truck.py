@@ -1,3 +1,4 @@
+from utilities.time import time_float_to_str
 from wgups.package import Package
 from wgups.route import Route
 
@@ -33,3 +34,14 @@ class Truck:
         if not self.routes:
             return 0.0
         return self.routes[-1].route_finish_time()
+
+    def print_truck_info(self):
+        print(f"==== Truck {self.id} ====\n")
+        print(f"Total distance travelled: {self.total_distance_travelled():.2f} miles")
+        print(f"Day finished at: {time_float_to_str(self.last_route_finish_time())}\n")
+        print(f"Total delivered packages: {len(self.packages)}")
+        print(f"Routes taken:\n")
+        for route in self.routes:
+            print(route)
+            print("\n")
+        print("=================\n")

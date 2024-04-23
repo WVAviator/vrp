@@ -12,3 +12,31 @@ class Solution:
         s = f"All packages delivered by: {time_float_to_str(final_time)}\n"
         s += f"Total distance travelled: {self.total_distance:.2f} miles\n"
         return s
+
+    def print_routes(self):
+        for t in self.trucks:
+            print(f"Truck {t.id}:")
+            for r in t.routes:
+                print(
+                    f"Depart: {time_float_to_str(r.departure_time)} | Arrive: {time_float_to_str(r.route_finish_time())}\n{r}"
+                )
+            print("\n")
+
+    def print_truck_info(self, truck_id: int) -> bool:
+        for t in self.trucks:
+            if t.id == truck_id:
+                t.print_truck_info()
+                return True
+        return False
+
+    def print_package_info(self, package_id: int, time: float = 1440.0):
+        for t in self.trucks:
+            for r in t.routes:
+                for p in r.deliveries:
+                    if p.package_id == package_id:
+                        print(f"==== Package {package_id} ====\n")
+                        for info in p.get_tracking_info(time):
+                            print(info)
+                        print("\n====================\n")
+                        return True
+        return False

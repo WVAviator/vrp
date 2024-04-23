@@ -15,17 +15,20 @@ class SolutionFactory:
         pass
 
     def generate_best_solution(self):
-        best_solution = self.generate_solution(0.0)
+        best_solution = None
 
-        priority_modifier = 0.01
+        priority_modifier = 0.00
         while priority_modifier <= 2.0:
             solution = self.generate_solution(priority_modifier)
-            if (
-                solution != None
-                and solution.total_distance < best_solution.total_distance
-            ):
-                best_solution = solution
             priority_modifier += 0.01
+
+            if solution == None:
+                continue
+
+            if best_solution == None:
+                best_solution = solution
+            elif solution.total_distance < best_solution.total_distance:
+                best_solution = solution
 
         return best_solution
 
@@ -87,6 +90,8 @@ class SolutionFactory:
             )
             current_truck.add_route(candidate_routes[0])
 
-        solution = Solution([truck1, truck2, truck3])
+        if pt.packages_remaining() > 0:
+            return None
 
+        solution = Solution([truck1, truck2, truck3])
         return solution

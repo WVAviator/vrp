@@ -25,7 +25,7 @@ class Package:
         self.status = (
             "delayed" if self.constraints.delayed_until > 480 else "at the hub"
         )
-        self.tracking_info = []
+        self.tracking_info: list[tuple[float, str]] = []
         self.group_id = package_id
 
     def formatted_address(self):
@@ -39,7 +39,13 @@ class Package:
         Appends a message to the package's tracking info.
         """
         time_str = f"{int(time // 60)}:{int(time % 60):02d}"
-        self.tracking_info.append(f"{time_str} - {message}")
+        self.tracking_info.append((time, f"{time_str} - {message}"))
+
+    def get_tracking_info(self, time: float) -> list[str]:
+        """
+        Given a time, return all tracking info before that time.
+        """
+        return [t[1] for t in self.tracking_info if t[0] <= time]
 
     def __repr__(self):
         return f"{{ id: {self.package_id}, address: {self.address}, deadline: {self.deadline}, status: {self.status} }}"

@@ -53,13 +53,13 @@ class Route:
         current = 0
         for package in self.deliveries:
             package.add_tracking_info(
-                self.departure_time, f"departed HUB on truck {self.truck_id}"
+                self.departure_time, f"Departed HUB on Truck {self.truck_id}"
             )
             distance = self.distance_table.get_package_distance(
                 current, package.package_id
             )
             time += distance / AVERAGE_SPEED * 60
-            package.add_tracking_info(time, f"delivered to {package.address}")
+            package.add_tracking_info(time, f"Delivered to {package.address}")
             package.status = "delivered"
             current = package.package_id
 

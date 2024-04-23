@@ -18,29 +18,56 @@ state = ""
 while state != "q":
     if state == "p":
         print(
-            "To track a package, enter the time (00:00-24:00) and the package ID separated by a space. Enter 'b' to go back."
+            "To track a package, enter the package ID followed (optionally) by the time (00:00-24:00) separated by a space. Enter 'b' to go back."
         )
-        print("Example viewing tracking info for package 26 at 10:15 AM:\n\t10:15 26")
         user_input = input()
         if user_input == "b":
             state = ""
             continue
-        time_str, package_id = user_input.split(" ")
+
+        # if no space exists in the string, only a package ID was provided
+        if not " " in user_input:
+            time_str = "24:00"
+            package_id = user_input
+        else:
+            package_id, time_str = user_input.split(" ")
+
+        if not package_id.isnumeric():
+            print("Invalid package ID\n")
+        package_id = int(package_id)
+
+        if not ":" in time_str:
+            print("Invalid time string. Examples: 9:25, 11:15, 14:48\n")
+
+        hour_str, minute_str = time_str.split(":")
+        if not hour_str.isnumeric or not minute_str.isnumeric:
+            print("Invalid time string. Examples: 9:25, 11:15, 14:48\n")
+
+        h, m = int(hour_str), int(minute_str)
+        time = h * 60 + m
+
+        if not best_solution.print_package_info(package_id, time):
+            print("Package ID not found.\n")
+
     elif state == "r":
-        print("To go back, enter 'b'")
-        user_input = input()
-        if user_input == "b":
-            state = ""
-            continue
+        print("==== Route Information ====\n")
+        best_solution.print_routes()
+        print("===========================\n")
+        state = ""
     elif state == "t":
         print(
-            "Enter the truck id, followed by an 'r' to view routes, or a'd' to view total distance. Enter 'b' to go back."
+            "Enter the truck id to view distance and route info. Enter 'b' to go back."
         )
-        print("Example viewing the total distance for truck 2:\n\t2 d")
         user_input = input()
         if user_input == "b":
             state = ""
             continue
+        if not user_input.isnumeric():
+            print("Invalid truck id.\n")
+            continue
+        truck_id = int(user_input)
+        if not best_solution.print_truck_info(truck_id):
+            print("Invalid truck id.\n")
     else:
         print(
             "Enter 'p' to track a package, 'r' to view routes, or 't' to view truck information. Enter 'q' to quit."
