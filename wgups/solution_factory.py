@@ -44,9 +44,9 @@ class SolutionFactory:
 
         truck1 = Truck(1)
         truck2 = Truck(2)
-        # Only two drivers are available, so truck 3 is never used
         truck3 = Truck(3)
 
+        # Only two drivers are available, so truck 3 is never used
         trucks_at_hub = [truck1, truck2]
 
         route_factory = RouteFactory(pt, dt)
@@ -72,10 +72,11 @@ class SolutionFactory:
                 f"Generated a savings list containing {len(savings_list)} possible routings"
             )
 
+            # generate a list of candidate routes using the Clarke-Wright savings algorithm
             candidate_routes = route_factory.compute_routes(savings_list, current_truck)
 
             # if no candidate routes are available, the truck will wait until the next package arrives
-            # the due_back_time is a good interval because it represents the next time the number of packages may change
+            # the due_back_time is a good interval because it represents the next time the number of available packages may change
             if len(candidate_routes) == 0:
                 print("No candidate routes to consider at this time, truck will wait")
                 current_truck.next_available_time = pt.next_package_arrival()
@@ -85,9 +86,9 @@ class SolutionFactory:
                     break
                 continue
 
-            # select the best route (routes with higher priority (sooner deadlines) will be preferred)
+            # select the best route 
             candidate_routes.sort(
-                key=lambda x: (x.priority, x.efficiency()), reverse=True
+                key=lambda x: x.efficiency(), reverse=True
             )
 
             # simulate the route (update package tracking info) and update the truck next available time

@@ -13,25 +13,17 @@ class SavingsList:
         pt: PackageTable,
         dt: DistanceTable,
         priority_modifier: float = 0.0,
-        sub_package_list: Optional[list[int]] = None,
     ):
-        self.savings_list = []
-
         self.pt = pt
         self.dt = dt
 
-        if sub_package_list:
-            self.package_list = []
-            for p in sub_package_list:
-                package = pt.get_package(p)
-                assert package != None
-                self.package_list.append(package)
-        else:
-            self.package_list = pt.get_package_list()
+        self.savings_list = []
+        self.package_list = pt.get_package_list()
 
         # O(n^2) - uses nested loops to compare each package to every other package to calculate the savings.
         for i in range(len(self.package_list)):
             for j in range(i + 1, len(self.package_list)):
+                # We only care about packages that are ready to be delivered
                 if (
                     self.package_list[i].status != "at the hub"
                     or self.package_list[j].status != "at the hub"
@@ -63,7 +55,7 @@ class SavingsList:
 
     def calculate_savings(self, p1: int, p2: int) -> float:
         """
-        Given two package ids that already exist in the initialized package table or subgroup list,
+        Given two package ids that already exist in the initialized package table,
         calculates the savings that would be used in the savings report.
         """
 

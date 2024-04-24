@@ -6,6 +6,9 @@ from wgups.package_table import PackageTable
 
 class DistanceTable:
     def get_distance(self, addr1: str, addr2: str) -> float:
+        """
+        Given two formatted addresses (Street + Zip Code), this returns the distance between them through a distance table lookup.
+        """
         a1_index = self.address_table.get(addr1)
         a2_index = self.address_table.get(addr2)
 
@@ -14,21 +17,31 @@ class DistanceTable:
         if a2_index == None:
             raise Exception(f"Address not found: {addr2}")
 
+        # The first index should be the largest since only the bottom-left of the distance table is populated with values.
         if a1_index < a2_index:
             a1_index, a2_index = a2_index, a1_index
 
         return self.distance_table[a1_index][a2_index]
 
     def get_address(self, index: int) -> str:
+        """
+        Given an index, retuns the formatted address.
+        """
         return self.address_index_table[index]
 
     def get_address_index(self, address: str) -> int:
+        """
+        Given a formatted address, returns the address ID for use in distance table lookups
+        """
         addr = self.address_table.get(address)
         if addr == None:
             raise Exception(f"Address not found: {address}")
         return addr
 
     def get_package_distance(self, pid1: int, pid2: int):
+        """
+        Given two package IDs, returns the distance between the package delivery addresses.
+        """
         p1 = self.package_table.get_package(pid1)
         p2 = self.package_table.get_package(pid2)
 
@@ -43,11 +56,14 @@ class DistanceTable:
         self.address_index_table = []
         self.distance_table = []
 
+        # Builds the distance table from the CSV file
         with open(file_path) as csvfile:
             csv_reader = csv.reader(csvfile, delimiter=",")
 
             for i, row in enumerate(csv_reader):
                 address = " ".join("".join(row[1].split("\n")).strip().split("("))[:-1]
+
+                # Trimming the last ")" character off the addresses messing up the HUB address
                 if address == "HU":
                     address = "HUB"
 

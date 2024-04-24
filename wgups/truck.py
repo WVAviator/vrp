@@ -36,6 +36,9 @@ class Truck:
         return self.routes[-1].route_finish_time()
 
     def print_truck_info(self):
+        """
+        Prints summary information about the truck, including the distance and time enroute and the routes taken.
+        """
         print(f"==== Truck {self.id} ====\n")
         print(f"Total distance travelled: {self.total_distance_travelled():.2f} miles")
         print(f"Day finished at: {time_float_to_str(self.last_route_finish_time())}\n")

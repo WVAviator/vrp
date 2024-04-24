@@ -81,6 +81,7 @@ class PackageTable:
         return len(self.get_undelivered_packages())
 
     def _load_package_data(self, file_path: str):
+        # Reads the package information as a CSV file and builds a hashtable of packages
         with open(file_path) as csvfile:
             list_reader = csv.reader(csvfile, delimiter=",")
             for row in list_reader:

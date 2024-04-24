@@ -46,9 +46,11 @@ while state != "q":
         h, m = int(hour_str), int(minute_str)
         time = h * 60 + m
 
+        # Prints a list of the most recent statuses for all packages
         if package_id == "all":
             packages = best_solution.get_package_list()
 
+            # Displays a header based on the time entered or EOD
             if time == 1440:
                 print("==== Package Statuses - EOD ====\n")
             else:
@@ -75,6 +77,7 @@ while state != "q":
             print("Invalid package ID\n")
         package_id = int(package_id)
 
+        # Prints the tracking information for a single package
         if not best_solution.print_package_info(package_id, time):
             print("Package ID not found.\n")
 
@@ -98,6 +101,8 @@ while state != "q":
             print("Invalid truck id.\n")
             continue
         truck_id = int(user_input)
+
+        # Prints the truck information
         if not best_solution.print_truck_info(truck_id):
             print("Invalid truck id.\n")
 

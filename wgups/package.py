@@ -28,6 +28,7 @@ class Package:
         self.tracking_info: list[tuple[float, str]] = []
         self.group_id = package_id
 
+        # Set initial tracking info
         if self.constraints.delayed_until > 480 and self.constraints.updated_address:
             self.add_tracking_info(480, "On hold: Invalid address")
         elif self.constraints.delayed_until > 480:

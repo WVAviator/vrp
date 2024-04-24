@@ -21,7 +21,6 @@ class Route:
         self.package_table = pt
         self.has_simulated = False
         self.due_back_time = 1440.0
-        self.priority = 0
 
     def set_due_back_time(self, time: float):
         """
@@ -51,24 +50,34 @@ class Route:
 
         time = self.departure_time
         current = 0
+
+        # calculates the time of delivery for each package in the route and adds the departure and delivery tracking numbers
         for package in self.deliveries:
+
             package.add_tracking_info(
                 self.departure_time, f"Departed HUB on Truck {self.truck_id}"
             )
+            
             distance = self.distance_table.get_package_distance(
                 current, package.package_id
             )
             time += distance / AVERAGE_SPEED * 60
+
             package.add_tracking_info(time, f"Delivered to {package.address}")
             package.status = "delivered"
+
             current = package.package_id
 
     def contains_package(self, package_id: int) -> bool:
+        """
+        Given a package ID, returns True if the package exists in this route.
+        """
         return package_id in self.packages
 
     def insert_package(self, package_id: int) -> bool:
         """
         Attempts to insert a package somewhere in the route in the most efficient place that will not violate any constraints.
+        This is not typically appropriate for Clarke-Wright Savings, however it is necessary to accomodate constraints that involve adding packages with dependencies on other packages.
         """
         if package_id in self.packages:
             return True
@@ -81,6 +90,8 @@ class Route:
 
         best_route = None
         best_distance = float("inf")
+
+        # inserts the package at each possible index, verifies the route is still legal, and then updates the best_route if so
         for i in range(len(route) + 1):
             route.insert(i, package)
             if self.verify_deliveries(route):
@@ -95,48 +106,13 @@ class Route:
             route.pop(i)
 
         if best_route == None:
-            # print(f"No possible insertion point for package {package_id} was found.")
+            if DEBUG:
+                print(f"No possible insertion point for package {package_id} was found.")
             return False
 
         self.deliveries = best_route
         self.packages.add(package_id)
-        if package.constraints.deadline < 1440.0:
-            self.priority += self.calculate_priority(package)
 
-        return True
-
-    def add_all_packages(self, package_ids: list[int]):
-        """
-        Permutes through all possible combinations of packages and adds the best one to the route.
-        """
-        route = []
-        for package_id in package_ids:
-            package = self.package_table.get_package(package_id)
-            if package == None:
-                raise Exception("An invalid package ID was provided.")
-            route.append(package)
-
-        best_route = None
-        best_distance = float("inf")
-        for i in range(len(route)):
-            for j in range(i + 1, len(route)):
-                route[i], route[j] = route[j], route[i]
-                if self.verify_deliveries(route):
-                    distance = self.calculate_distance(route)
-                    if distance < best_distance:
-                        best_distance = distance
-                        best_route = route[::]
-                route[i], route[j] = route[j], route[i]
-
-        if best_route == None:
-            print(f"No possible permutation of the route {route} is valid.")
-            return False
-
-        self.deliveries = best_route
-        for package in best_route:
-            self.packages.add(package.package_id)
-            if package.constraints.deadline < 1440.0:
-                self.priority += self.calculate_priority(package)
         return True
 
     def add_package(self, package_id: int, paired_package_id: int):
@@ -157,6 +133,8 @@ class Route:
         proposed_deliveries = []
         include_paired = False
 
+        # if this is a new route, add both packages
+        # otherwise add the single package only if the other is not interior to the route
         if len(self.deliveries) == 0:
             proposed_deliveries = [package, paired_package]
             include_paired = True
@@ -171,36 +149,22 @@ class Route:
                 )
             return False
 
+        # verify the route is still legal after the change before officially updating
+        # will also try reversing the route if it helps
         if self.verify_deliveries(proposed_deliveries):
             self.deliveries = proposed_deliveries
             self.packages.add(package_id)
-            if package.constraints.deadline < 1440.0:
-                self.priority += self.calculate_priority(package)
             if include_paired:
                 self.packages.add(paired_package_id)
-                if paired_package.constraints.deadline < 1440.0:
-                    self.priority += self.calculate_priority(paired_package)
             return True
         elif self.verify_deliveries(proposed_deliveries[::-1]):
             self.deliveries = proposed_deliveries[::-1]
             self.packages.add(package_id)
-            if package.constraints.deadline < 1440.0:
-                self.priority += self.calculate_priority(package)
             if include_paired:
                 self.packages.add(paired_package_id)
-                if paired_package.constraints.deadline < 1440.0:
-                    self.priority += self.calculate_priority(paired_package)
             return True
         else:
             return False
-
-    def calculate_priority(self, package: Package) -> float:
-        """
-        Calculates the priority value this package adds to the route. Packages with sooner deadlines will have higher priority.
-        The priority is effectively the inverse of the time remaining to deliver this package.
-        """
-        time_remaining = package.constraints.deadline - self.departure_time
-        return 1 / time_remaining if time_remaining > 0 else 0
 
     def merge(self, other: "Route", p1_id: int, p2_id: int) -> bool:
         """
@@ -212,6 +176,7 @@ class Route:
 
         merged_deliveries = []
 
+        # attempts to merge front to front, front to back, or back to back
         if self.deliveries[-1] == p1_id or self.deliveries[-1] == p2_id:
             if other.deliveries[0] == p1_id or other.deliveries[0] == p2_id:
                 merged_deliveries = self.deliveries + other.deliveries
@@ -223,15 +188,14 @@ class Route:
             else:
                 merged_deliveries = other.deliveries + self.deliveries
 
+        # verifies that the new updated route is still legal forwards or in reverse
         if self.verify_deliveries(merged_deliveries):
             self.deliveries = merged_deliveries
             self.packages = self.packages.union(other.packages)
-            self.priority += other.priority
             return True
         elif self.verify_deliveries(merged_deliveries[::-1]):
             self.deliveries = merged_deliveries[::-1]
             self.packages = self.packages.union(other.packages)
-            self.priority += other.priority
             return True
 
         return False
@@ -368,6 +332,8 @@ class Route:
         route_str += " -> HUB\n   "
 
         current = 0
+
+        # this pretty prints the route with arrows between the packages and distance underneath
         for package in self.deliveries:
             distance = self.distance_table.get_package_distance(
                 current, package.package_id

@@ -13,6 +13,9 @@ class RouteFactory:
         self.dt = dt
 
     def compute_routes(self, savings_list: SavingsList, current_truck: Truck):
+        """
+        Given a savings list and truck, generates a series of possible routes using the Clarke-Wright savings algorithm.
+        """
 
         # generate routes from the savings list and package constraints
         assigned_packages = set()
