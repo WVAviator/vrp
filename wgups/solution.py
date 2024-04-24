@@ -49,3 +49,13 @@ class Solution:
                         print("\n====================\n")
                         return True
         return False
+
+    def get_package_list(self):
+        """
+        Returns a list of all packages delivered by the trucks in this solution.
+        """
+        packages = []
+        for t in self.trucks:
+            packages.extend(t.packages)
+        packages.sort(key=lambda x: x.package_id)
+        return packages

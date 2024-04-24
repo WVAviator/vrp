@@ -1,5 +1,6 @@
 # Alexander Durham - Student ID 011565339
 
+from utilities.time import time_float_to_str
 from wgups.solution_factory import SolutionFactory
 
 
@@ -9,6 +10,7 @@ best_solution = solution_factory.generate_best_solution()
 
 if best_solution == None:
     print("No solution found. Exiting...")
+    exit()
 
 print("\n\n\n==== Best Solution ====\n")
 print(best_solution)
@@ -20,7 +22,7 @@ while state != "q":
     # Package tracking view state
     if state == "p":
         print(
-            "To track a package, enter the package ID followed (optionally) by the time (00:00-24:00) separated by a space. Enter 'b' to go back."
+            "To track a package, enter the package ID (or 'all') followed (optionally) by the time (00:00-24:00) separated by a space. Enter 'b' to go back."
         )
         user_input = input()
         if user_input == "b":
@@ -34,10 +36,6 @@ while state != "q":
         else:
             package_id, time_str = user_input.split(" ")
 
-        if not package_id.isnumeric():
-            print("Invalid package ID\n")
-        package_id = int(package_id)
-
         if not ":" in time_str:
             print("Invalid time string. Examples: 9:25, 11:15, 14:48\n")
 
@@ -47,6 +45,35 @@ while state != "q":
 
         h, m = int(hour_str), int(minute_str)
         time = h * 60 + m
+
+        if package_id == "all":
+            packages = best_solution.get_package_list()
+
+            if time == 1440:
+                print("==== Package Statuses - EOD ====\n")
+            else:
+                print(f"==== Package Statuses - {time_float_to_str(time)} ====\n")
+
+            for package in packages:
+                info = package.get_tracking_info(time)
+
+                time_str, message = info[-1].split(" - ")
+                if (
+                    message.split(" ")[0] == "Delivered"
+                    or message.split(" ")[0] == "Departed"
+                ):
+                    latest_update = f"{message} at {time_str}"
+                else:
+                    latest_update = f"{message}"
+
+                print(f"Package {package.package_id}: {latest_update}")
+
+            print("\n===========================\n")
+            continue
+
+        if not package_id.isnumeric():
+            print("Invalid package ID\n")
+        package_id = int(package_id)
 
         if not best_solution.print_package_info(package_id, time):
             print("Package ID not found.\n")

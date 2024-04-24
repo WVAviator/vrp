@@ -28,6 +28,13 @@ class Package:
         self.tracking_info: list[tuple[float, str]] = []
         self.group_id = package_id
 
+        if self.constraints.delayed_until > 480 and self.constraints.updated_address:
+            self.add_tracking_info(480, "On hold: Invalid address")
+        elif self.constraints.delayed_until > 480:
+            self.add_tracking_info(480, "Delayed inbound to the hub")
+        else:
+            self.add_tracking_info(480, "Ready for delivery at the hub")
+
     def formatted_address(self):
         """
         Returns the address formatted with zip code to be used in distance table lookups.
