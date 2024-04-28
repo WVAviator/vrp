@@ -11,6 +11,8 @@ def time_str_to_int(time_str: str) -> int:
 
 
 def time_int_to_str(time: int) -> str:
+    if time == 1440:
+        return "EOD"
     hours = time // 60
     minutes = time % 60
     period = "AM"

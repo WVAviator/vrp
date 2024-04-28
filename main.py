@@ -8,7 +8,7 @@ from wgups.solution_factory import SolutionFactory
 solution_factory = SolutionFactory()
 best_solution = solution_factory.generate_best_solution()
 
-if best_solution == None:
+if best_solution is None:
     print("No solution found. Exiting...")
     exit()
 
@@ -30,13 +30,13 @@ while state != "q":
             continue
 
         # if no space exists in the string, only a package ID was provided
-        if not " " in user_input:
+        if " " not in user_input:
             time_str = "24:00"
             package_id = user_input
         else:
             package_id, time_str = user_input.split(" ")
 
-        if not ":" in time_str:
+        if ":" not in time_str:
             print("Invalid time string. Examples: 9:25, 11:15, 14:48\n")
 
         hour_str, minute_str = time_str.split(":")
@@ -59,14 +59,18 @@ while state != "q":
             for package in packages:
                 info = package.get_tracking_info(time)
 
+                deadline_str = time_float_to_str(package.constraints.deadline)
+
                 time_str, message = info[-1].split(" - ")
                 if (
                     message.split(" ")[0] == "Delivered"
                     or message.split(" ")[0] == "Departed"
                 ):
-                    latest_update = f"{message} at {time_str}"
+                    latest_update = (
+                        f"{message} at {time_str} | Deadline: {deadline_str}"
+                    )
                 else:
-                    latest_update = f"{message}"
+                    latest_update = f"{message} | Deadline: {deadline_str}"
 
                 print(f"Package {package.package_id}: {latest_update}")
 

@@ -44,6 +44,9 @@ class Solution:
                 for p in r.deliveries:
                     if p.package_id == package_id:
                         print(f"==== Package {package_id} ====\n")
+                        print(f"Destination: {p.formatted_address()}")
+                        print(f"Deadline: {time_float_to_str(p.constraints.deadline)}")
+                        print("Tracking info:\n")
                         for info in p.get_tracking_info(time):
                             print(info)
                         print("\n====================\n")
